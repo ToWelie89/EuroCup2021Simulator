@@ -85,12 +85,14 @@ const getMatchResults = () => new Promise((resolve, reject) => {
             let matches = [];
 
             for (let i = 0; i < newList.length; i += 3) {
-                matches.push({
-                    team1: newList[i],
-                    team2: newList[i+2],
-                    team1score: newList[i+1].split('-')[0],
-                    team2score: newList[i+1].split('-')[1]
-                });
+                if (newList[i] && newList[i+1] && newList[i+2]) {
+                    matches.push({
+                        team1: newList[i],
+                        team2: newList[i+2],
+                        team1score: newList[i+1].split('-')[0],
+                        team2score: newList[i+1].split('-')[1]
+                    });
+                }
             };
 
             matches = matches.filter(x =>

@@ -4,7 +4,8 @@ import {
     knockoutPhaseNumberMatrix,
     TEAMS_PER_GROUP,
     knockOutPhases,
-    thirdPlaceCombinationMatrix
+    thirdPlaceCombinationMatrix,
+    getMatchResults
 } from './constants';
 
 /*************************
@@ -31,6 +32,67 @@ $(document).ready(() => {
     $('#randomizeGroupsButton').click((index, element) => randomize(false));
     $('#randomizeAllButton').click((index, element) => randomize(true));
 
+    $('#getMatchesButton').click(() => {
+        startLoader();
+        getMatchResults().then(matches => {
+            console.log(matches);
+            matches.forEach(match => {
+                if (match.phase === 'groupPhase') {
+                    [...document.querySelectorAll('.groupMatchesTable tr:not(.groupTitleRow)')].forEach(row => {
+                        const team1name = row.querySelector('td:nth-child(1) p').innerText;
+                        const team2name = row.querySelector('td:nth-child(5) p').innerText;
+    
+                        let rowFound = false;
+    
+                        if (team1name.includes(match.team1) && team2name.includes(match.team2)) {
+                            row.querySelector('td:nth-child(2) input').value = match.team1score;
+                            row.querySelector('td:nth-child(4) input').value = match.team2score
+                            rowFound = true;
+                        } else if ((team1name.includes(match.team2) && team2name.includes(match.team1))) {
+                            row.querySelector('td:nth-child(4) input').value = match.team1score;
+                            row.querySelector('td:nth-child(2) input').value = match.team2score;
+                            rowFound = true;
+                        }
+    
+                        if (rowFound) {
+                            $(row.querySelector('td:nth-child(4) input')).keyup();
+                        }
+                    });
+                } else if (match.phase === 'knockoutPhase') {
+                    [16, 8, 4, 2].forEach(round => {
+                        for (let i = 1; i <= round; i += 2) {
+                            const cell1 = document.querySelectorAll(`td.knockoutPhaseCell#${round}nr${i}`);
+                            const cell2 = document.querySelectorAll(`td.knockoutPhaseCell#${round}nr${i+1}`);
+
+                            const team1name = cell1.querySelector('div span').innerText;
+                            const team2name = cell2.querySelector('div span').innerText;
+
+                            let rowFound = false;
+        
+                            if (team1name.includes(match.team1) && team2name.includes(match.team2)) {
+                                cell1.querySelector('input').value = match.team1score;
+                                cell2.querySelector('input').value = match.team2score
+                                rowFound = true;
+                            } else if ((team1name.includes(match.team2) && team2name.includes(match.team1))) {
+                                cell2.querySelector('input').value = match.team1score;
+                                cell1.querySelector('input').value = match.team2score;
+                                rowFound = true;
+                            }
+        
+                            if (rowFound) {
+                                $(cell2.querySelector('input')).keyup();
+                            }
+                        }
+                    });
+                }
+            });
+            stopLoader();
+        })
+        .catch(e => {
+            stopLoader();
+            alert('error ' + e.message);
+        });
+    });
     $('#clearButton').click(() => {
         window.location.replace(window.location.href.split('?')[0]);
     });

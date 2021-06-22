@@ -60,6 +60,55 @@ const groupNames = [
     'A', 'B', 'C', 'D', 'E', 'F'
 ];
 
+const getMatchResults = () => new Promise((resolve, reject) => {
+    fetch('https://www.uefa.com/uefaeuro-2020/news/0254-0d41684d1216-06773df7faed-1000--euro-2020-fixtures-and-results/')
+    .then(res => res.text())
+    .then(res => {
+        try {
+            const tempBox = document.createElement('html');
+            tempBox.innerHTML = res;
+            const mainBox = tempBox.querySelector('body > div.container-fluid.main-wrap.article_page > div.body.row > div > div.content > article > section.section.article_content > div > div > div');
+            const pElements = mainBox.querySelectorAll('p');
+            let newList = [...pElements].reduce((a, c) => {
+                a = [...a, ...c.innerText.split(' ')];
+                return a;
+            }, []);
+
+            const teamsCopy = [];
+            teams.forEach(t => teamsCopy.push(Object.assign({}, t)));
+            teamsCopy.find(x => x.name === 'North Macedonia').name = 'Macedonia';
+            teamsCopy.find(x => x.name === 'Czech Republic').name = 'Czech';
+
+            newList = newList.filter(x => {
+                return teamsCopy.some(t => x.toUpperCase().includes(t.name.toUpperCase())) || /[0-9]-[0-9]/.test(x);
+            });
+            let matches = [];
+
+            for (let i = 0; i < newList.length; i += 3) {
+                matches.push({
+                    team1: newList[i],
+                    team2: newList[i+2],
+                    team1score: newList[i+1].split('-')[0],
+                    team2score: newList[i+1].split('-')[1]
+                });
+            };
+
+            matches = matches.filter(x =>
+                x.team1 &&
+                x.team2 &&
+                x.team1score &&
+                x.team2score
+            );
+
+            matches.forEach((x, i) => x.phase = i < 36 ? 'groupPhase' : 'knockoutPhase');
+
+            resolve(matches);
+        } catch(e) {
+            reject(e);
+        }
+    });
+});
+
 // How to know where each winner/runner up from each group gets placed in the knockout table
 // See https://en.wikipedia.org/wiki/UEFA_Euro_2020_knockout_phase#Bracket
 const knockoutPhaseNumberMatrix = {
@@ -190,4 +239,5 @@ export {
     defaultColor,
     knockoutPhaseNumberMatrix,
     thirdPlaceCombinationMatrix,
+    getMatchResults,
 };

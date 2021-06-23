@@ -712,18 +712,29 @@ function matchIsSet(match) {
 }
 
 function sortGroup(group) {
+    // Sorting of groups is based on UEFA:s ruleset which can be found here
+    // https://documents.uefa.com/v/u/WVKcnryVkASzztwJjPBcIw
+    // See article 20 (page 23)
+
     group.teams.sort((a, b) => {
-        if (b.p != a.p)
-        {
+        const currentGroup = data.groups.find(group => group.teams.some(t => t.name === a.name));
+        const currentMatch = currentGroup.matches.find(match =>  (match.team1.name === a.name && match.team2.name === b.name) ||
+                                                                 (match.team2.name === a.name && match.team1.name === b.name));
+        if (b.p != a.p) {
             return (b.p - a.p);
-        }
-        else{
-            if (b.diff != a.diff)
-            {
+        } else {
+            if (b.diff != a.diff) {
                 return (b.diff - a.diff);
-            }
-            else{
+            } else if (currentMatch && currentMatch.team1score != currentMatch.team2score) { // Inbördes möten
+                if (currentMatch.team1.name === a.name && currentMatch.team2.name === b.name) {
+                    return Number(currentMatch.team2score) - Number(currentMatch.team1score);
+                } else if (currentMatch.team2.name === a.name && currentMatch.team1.name === b.name) {
+                    return Number(currentMatch.team1score) - Number(currentMatch.team2score);
+                }
+            } else if (b.f != a.f) {
                 return (b.f - a.f);
+            } else {
+                b.w - a.w;
             }
         }
     });

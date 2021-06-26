@@ -61,8 +61,8 @@ $(document).ready(() => {
                 } else if (match.phase === 'knockoutPhase') {
                     [16, 8, 4, 2].forEach(round => {
                         for (let i = 1; i <= round; i += 2) {
-                            const cell1 = document.querySelectorAll(`td.knockoutPhaseCell#${round}nr${i}`);
-                            const cell2 = document.querySelectorAll(`td.knockoutPhaseCell#${round}nr${i+1}`);
+                            const cell1 = document.querySelector(`td.knockoutPhaseCell\#ro${round}nr${i}`);
+                            const cell2 = document.querySelector(`td.knockoutPhaseCell\#ro${round}nr${i+1}`);
 
                             const team1name = cell1.querySelector('div span').innerText;
                             const team2name = cell2.querySelector('div span').innerText;

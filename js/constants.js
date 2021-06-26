@@ -67,44 +67,62 @@ const getMatchResults = () => new Promise((resolve, reject) => {
         try {
             const tempBox = document.createElement('html');
             tempBox.innerHTML = res;
-            const mainBox = tempBox.querySelector('body > div.container-fluid.main-wrap.article_page > div.body.row > div > div.content > article > section.section.article_content > div > div > div');
-            const pElements = mainBox.querySelectorAll('p');
-            let newList = [...pElements].reduce((a, c) => {
-                a = [...a, ...c.innerText.split(' ')];
-                return a;
-            }, []);
+            const mainBox = tempBox.querySelector('body');
 
-            const teamsCopy = [];
-            teams.forEach(t => teamsCopy.push(Object.assign({}, t)));
-            teamsCopy.find(x => x.name === 'North Macedonia').name = 'Macedonia';
-            teamsCopy.find(x => x.name === 'Czech Republic').name = 'Czech';
+            const getMatches = (phase, mainBox) => {
+                let pElements = [...mainBox.querySelectorAll('p')];
 
-            newList = newList.filter(x => {
-                return teamsCopy.some(t => x.toUpperCase().includes(t.name.toUpperCase())) || /[0-9]-[0-9]/.test(x);
-            });
-            let matches = [];
+                const groupStageDivider = pElements.find(x => x.innerText.includes('Group A:'));
+                const index = pElements.indexOf(groupStageDivider);
 
-            for (let i = 0; i < newList.length; i += 3) {
-                if (newList[i] && newList[i+1] && newList[i+2]) {
-                    matches.push({
-                        team1: newList[i],
-                        team2: newList[i+2],
-                        team1score: newList[i+1].split('-')[0],
-                        team2score: newList[i+1].split('-')[1]
-                    });
+                if (phase === 'groupPhase') {
+                    pElements = pElements.slice(index, pElements.length);
+                } else {
+                    pElements = pElements.slice(0, index);
                 }
+
+                let newList = pElements.reduce((a, c) => {
+                    a = [...a, ...c.innerText.split(' ')];
+                    return a;
+                }, []);
+
+                const teamsCopy = [];
+                teams.forEach(t => teamsCopy.push(Object.assign({}, t)));
+                teamsCopy.find(x => x.name === 'North Macedonia').name = 'Macedonia';
+                teamsCopy.find(x => x.name === 'Czech Republic').name = 'Czech';
+
+                newList = newList.filter(x => {
+                    return teamsCopy.some(t => x.toUpperCase().includes(t.name.toUpperCase())) || /[0-9]-[0-9]/.test(x);
+                });
+                let matches = [];
+
+                for (let i = 0; i < newList.length; i += 3) {
+                    if (newList[i] && newList[i+1] && newList[i+2]) {
+                        matches.push({
+                            team1: newList[i],
+                            team2: newList[i+2],
+                            team1score: newList[i+1].split('-')[0],
+                            team2score: newList[i+1].split('-')[1]
+                        });
+                    }
+                };
+
+                matches = matches.filter(x =>
+                    x.team1 &&
+                    x.team2 &&
+                    x.team1score &&
+                    x.team2score
+                );
+                matches.forEach((x, i) => x.phase = phase);
+                return matches;
             };
 
-            matches = matches.filter(x =>
-                x.team1 &&
-                x.team2 &&
-                x.team1score &&
-                x.team2score
-            );
+            const groupMatches = getMatches('groupPhase', mainBox);
+            const knockoutMatches = getMatches('knockoutPhase', mainBox);
 
-            matches.forEach((x, i) => x.phase = i < 36 ? 'groupPhase' : 'knockoutPhase');
+            const allMatches = [...groupMatches, ...knockoutMatches];
 
-            resolve(matches);
+            resolve(allMatches);
         } catch(e) {
             reject(e);
         }

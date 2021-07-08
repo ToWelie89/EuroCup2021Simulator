@@ -81,6 +81,30 @@ const getMatchResults = () => new Promise((resolve, reject) => {
                     pElements = pElements.slice(0, index);
                 }
 
+                pElements.forEach(currentPElement => {
+                    if (/win [0-9]-[0-9] on pens/.test(currentPElement.innerText)) {
+                        let parts = currentPElement.innerText.split(' ');
+                        console.log(parts);
+                        const pens = parts.filter(x => x  === 'pens' || x  === 'pens)');
+                        pens.forEach(pen => {
+                            const index = parts.indexOf(pen);
+                            const teamWhoWonOnPens = parts[index - 4];
+                            const score = parts[index - 7];
+
+                            if (teamWhoWonOnPens === parts[index - 8]) {
+                                parts[index - 7] = `${score.split('-')[0]}P-${score.split('-')[0]}`;
+                            } else {
+                                parts[index - 7] = `${score.split('-')[0]}-${score.split('-')[0]}P`;
+                            }
+
+                            parts = parts.filter((x, i) => i !== (index - 2)) // Remove pens score
+                            parts = parts.filter((x, i) => i !== (index - 4)) // Remove pens winner
+
+                            currentPElement.innerText = parts.join(' ');
+                        });
+                    }
+                });
+
                 let newList = pElements.reduce((a, c) => {
                     a = [...a, ...c.innerText.split(' ')];
                     return a;
@@ -92,12 +116,19 @@ const getMatchResults = () => new Promise((resolve, reject) => {
                 teamsCopy.find(x => x.name === 'Czech Republic').name = 'Czech';
 
                 newList = newList.filter(x => {
-                    return teamsCopy.some(t => x.toUpperCase().includes(t.name.toUpperCase())) || /[0-9]-[0-9]/.test(x);
+                    return teamsCopy.some(t => x.toUpperCase().includes(t.name.toUpperCase())) || /[0-9]P?-[0-9]P?/.test(x);
                 });
                 let matches = [];
 
-                for (let i = 0; i < newList.length; i += 3) {
-                    if (newList[i] && newList[i+1] && newList[i+2]) {
+                for (let i = 0; i < newList.length; i += 1) {
+                    if (
+                        newList[i] &&
+                        newList[i+1] &&
+                        newList[i+2] &&
+                        teamsCopy.map(x => x.name).includes(newList[i]) &&
+                        teamsCopy.map(x => x.name).includes(newList[i + 2]) &&
+                        /[0-9]P?-[0-9]P?/.test(newList[i+1])
+                    ) {
                         matches.push({
                             team1: newList[i],
                             team2: newList[i+2],

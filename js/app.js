@@ -59,34 +59,38 @@ $(document).ready(() => {
                         }
                     });
                 } else if (match.phase === 'knockoutPhase') {
-                    [16, 8, 4, 2].forEach(round => {
-                        for (let i = 1; i <= round; i += 2) {
-                            const cell1 = document.querySelector(`td.knockoutPhaseCell\#ro${round}nr${i}`);
-                            const cell2 = document.querySelector(`td.knockoutPhaseCell\#ro${round}nr${i+1}`);
-
-                            const team1name = cell1.querySelector('div span').innerText;
-                            const team2name = cell2.querySelector('div span').innerText;
-
-                            let rowFound = false;
-        
-                            if (team1name.includes(match.team1) && team2name.includes(match.team2)) {
-                                cell1.querySelector('input').value = match.team1score;
-                                cell2.querySelector('input').value = match.team2score
-                                rowFound = true;
-                            } else if ((team1name.includes(match.team2) && team2name.includes(match.team1))) {
-                                cell2.querySelector('input').value = match.team1score;
-                                cell1.querySelector('input').value = match.team2score;
-                                rowFound = true;
+                    [16, 8, 4, 2].forEach((round, index) => {
+                        setTimeout(() => {
+                            for (let i = 1; i <= round; i += 2) {
+                                const cell1 = document.querySelector(`td.knockoutPhaseCell\#ro${round}nr${i}`);
+                                const cell2 = document.querySelector(`td.knockoutPhaseCell\#ro${round}nr${i+1}`);
+    
+                                const team1name = cell1.querySelector('div span').innerText;
+                                const team2name = cell2.querySelector('div span').innerText;
+    
+                                let rowFound = false;
+            
+                                if (team1name.includes(match.team1) && team2name.includes(match.team2)) {
+                                    cell1.querySelector('input').value = match.team1score;
+                                    cell2.querySelector('input').value = match.team2score
+                                    rowFound = true;
+                                } else if ((team1name.includes(match.team2) && team2name.includes(match.team1))) {
+                                    cell2.querySelector('input').value = match.team1score;
+                                    cell1.querySelector('input').value = match.team2score;
+                                    rowFound = true;
+                                }
+            
+                                if (rowFound) {
+                                    $(cell2.querySelector('input')).keyup();
+                                }
                             }
-        
-                            if (rowFound) {
-                                $(cell2.querySelector('input')).keyup();
-                            }
-                        }
+                        }, index * 50);
                     });
                 }
             });
-            stopLoader();
+            setTimeout(() => {
+                stopLoader();
+            }, 200);
         })
         .catch(e => {
             stopLoader();
@@ -423,11 +427,19 @@ function calculateAndRedrawKnockoutMatch(thisRound, thisRoundIndex) {
     team2box.removeClass('invalidGradient validGradient');
 
     if (team1score != '' && team2score != '') {
-        if (isNumber(team1score) && isNumber(team2score) && (team1score != team2score)) {
+        if (/[0-9]P?/.test(team1score) && /[0-9]P?/.test(team2score) && (team1score != team2score)) {
             $(`#ro${nextRound}nr${nextRoundIndex} div input[type="text"]`).removeAttr('disabled');
             $(`#ro${nextRound}nr${nextRoundIndex} div span`).css('color', 'black');
 
-            const winningTeamName = team1score > team2score ? team1 : team2;
+            let winningTeamName;
+
+            if (team1score.includes('P')) {
+                winningTeamName = team1;
+            } else if (team2score.includes('P')) {
+                winningTeamName = team2;
+            } else {
+                winningTeamName = team1score > team2score ? team1 : team2;
+            }
             const winningTeam = teams.find(x => x.name === winningTeamName);
 
             $(`#ro${nextRound}nr${nextRoundIndex} div span`).text(winningTeamName);
